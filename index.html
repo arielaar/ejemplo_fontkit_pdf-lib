@@ -10,8 +10,10 @@
   <button id="addTextButton">Add Text to PDF</button>
   <button id="savePdfButton">Save PDF</button>
 
-  <script src="fontkit.bundle.js"></script>
-  <script src="pdf-lib.bundle.js"></script>
+  <!-- <script src="fontkit.bundle.js"></script>
+  <script src="pdf-lib.bundle.js"></script> -->
+  <script src="fontkit.min.js"></script>
+  <script src="pdf-lib.min.js"></script>
   <script>
     async function createPdf() {
       const { PDFDocument, rgb } = window.pdfLib;
@@ -29,7 +31,7 @@
       const fontSize = 24;
 
       // Embed a font
-      const fontBytes = await fetch('fonts/courier-new-bold.ttf').then(res => res.arrayBuffer());
+      const fontBytes = await fetch('fonts/times-new-roman.ttf').then(res => res.arrayBuffer());
       const font = await pdfDoc.embedFont(fontBytes);
 
       // Add text to the page
