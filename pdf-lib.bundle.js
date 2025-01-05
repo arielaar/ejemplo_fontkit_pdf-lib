@@ -28431,6 +28431,6 @@ var __createBinding;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],174:[function(require,module,exports){
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-module.exports = { PDFDocument, rgb, StandardFonts };
+window.pdfLib = { PDFDocument, rgb, StandardFonts };
 
 },{"pdf-lib":157}]},{},[174]);

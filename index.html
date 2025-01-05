@@ -6,22 +6,35 @@
   <title>PDF Example</title>
 </head>
 <body>
-  <script src="fontkit.js"></script>
-  <script src="pdf-lib.js"></script>
+  <input type="text" id="textInput" placeholder="Enter text to add to PDF">
+  <button id="addTextButton">Add Text to PDF</button>
+  <button id="savePdfButton">Save PDF</button>
+
+  <script src="fontkit.bundle.js"></script>
+  <script src="pdf-lib.bundle.js"></script>
   <script>
-    // Tu código JavaScript para usar fontkit y pdf-lib
-    const { PDFDocument, rgb, StandardFonts } = pdfLib;
-
     async function createPdf() {
-      const pdfDoc = await PDFDocument.create();
-      const page = pdfDoc.addPage();
+      const { PDFDocument, rgb } = window.pdfLib;
+      const fontkit = window.fontkit;
 
-      const fontBytes = await fetch('path/to/your/font.ttf').then(res => res.arrayBuffer());
-      const font = await pdfDoc.embedFont(fontBytes);
+      // Create a new PDFDocument
+      const pdfDoc = await PDFDocument.create();
+
+      // Register fontkit with pdf-lib
+      pdfDoc.registerFontkit(fontkit);
+
+      const page = pdfDoc.addPage();
 
       const { width, height } = page.getSize();
       const fontSize = 24;
-      page.drawText('Hello, world!', {
+
+      // Embed a font
+      const fontBytes = await fetch('fonts/courier-new-bold.ttf').then(res => res.arrayBuffer());
+      const font = await pdfDoc.embedFont(fontBytes);
+
+      // Add text to the page
+      const text = document.getElementById('textInput').value;
+      page.drawText(text, {
         x: 50,
         y: height - 4 * fontSize,
         size: fontSize,
@@ -30,10 +43,30 @@
       });
 
       const pdfBytes = await pdfDoc.save();
-      // Aquí puedes guardar el PDF o hacer algo con los bytes del PDF
+      return pdfBytes;
     }
 
-    createPdf().catch(console.error);
+    document.getElementById('addTextButton').addEventListener('click', async () => {
+      const pdfBytes = await createPdf();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'output.pdf';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('savePdfButton').addEventListener('click', async () => {
+      const pdfBytes = await createPdf();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'output.pdf';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
   </script>
 </body>
 </html>

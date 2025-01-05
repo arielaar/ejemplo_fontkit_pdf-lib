@@ -2020,8 +2020,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 },{}],4:[function(require,module,exports){
 const fontkit = require('fontkit');
-module.exports = fontkit;
-
+window.fontkit = fontkit;
 },{"fontkit":22}],5:[function(require,module,exports){
 "use strict";
 
