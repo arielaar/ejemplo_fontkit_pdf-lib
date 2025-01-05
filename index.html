@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Example</title>
+</head>
+<body>
+  <script src="fontkit.bundle.js"></script>
+  <script src="pdf-lib.bundle.js"></script>
+  <script>
+    // Tu código JavaScript para usar fontkit y pdf-lib
+    const { PDFDocument, rgb, StandardFonts } = pdfLib;
+
+    async function createPdf() {
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage();
+
+      const fontBytes = await fetch('path/to/your/font.ttf').then(res => res.arrayBuffer());
+      const font = await pdfDoc.embedFont(fontBytes);
+
+      const { width, height } = page.getSize();
+      const fontSize = 24;
+      page.drawText('Hello, world!', {
+        x: 50,
+        y: height - 4 * fontSize,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0.53, 0.71),
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      // Aquí puedes guardar el PDF o hacer algo con los bytes del PDF
+    }
+
+    createPdf().catch(console.error);
+  </script>
+</body>
+</html>
