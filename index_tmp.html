@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Example</title>
+</head>
+<body>
+  <input type="text" id="textInput" placeholder="Enter text to add to PDF">
+  <button id="addTextButton">Add Text to PDF</button>
+  <button id="savePdfButton">Save PDF</button>
+
+  <!-- <script src="fontkit.bundle.js"></script>
+  <script src="pdf-lib.bundle.js"></script> -->
+  <script src="fontkit.min.js"></script>
+  <script src="pdf-lib.min.js"></script>
+  <script>
+    async function createPdf() {
+      const { PDFDocument, rgb } = window.pdfLib;
+      const fontkit = window.fontkit;
+
+      // Create a new PDFDocument
+      const pdfDoc = await PDFDocument.create();
+
+      // Register fontkit with pdf-lib
+      pdfDoc.registerFontkit(fontkit);
+
+      const page = pdfDoc.addPage();
+
+      const { width, height } = page.getSize();
+      const fontSize = 24;
+
+      // Embed a font
+      const fontBytes = await fetch('fonts/times-new-roman.ttf').then(res => res.arrayBuffer());
+      const font = await pdfDoc.embedFont(fontBytes);
+
+      // Add text to the page
+      const text = document.getElementById('textInput').value;
+      page.drawText(text, {
+        x: 50,
+        y: height - 4 * fontSize,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0.53, 0.71),
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      return pdfBytes;
+    }
+
+    document.getElementById('addTextButton').addEventListener('click', async () => {
+      const pdfBytes = await createPdf();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'output.pdf';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('savePdfButton').addEventListener('click', async () => {
+      const pdfBytes = await createPdf();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'output.pdf';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

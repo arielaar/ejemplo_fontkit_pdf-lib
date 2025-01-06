@@ -4,38 +4,99 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Example</title>
+  <style>
+    #pdfViewer {
+      border: 1px solid #ccc;
+      width: 100%;
+      height: 500px;
+      overflow: auto;
+    }
+    #fontSelector {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
+  <input type="file" id="pdfInput" accept=".pdf">
+  <div id="pdfViewer"></div>
   <input type="text" id="textInput" placeholder="Enter text to add to PDF">
+  <select id="fontSelector">
+    <option value="times-new-roman">Times New Roman</option>
+    <option value="arial">Arial</option>
+    <option value="courier-new">Courier New</option>
+    <option value="verdana">Verdana</option>
+  </select>
   <button id="addTextButton">Add Text to PDF</button>
   <button id="savePdfButton">Save PDF</button>
 
-  <!-- <script src="fontkit.bundle.js"></script>
-  <script src="pdf-lib.bundle.js"></script> -->
-  <script src="fontkit.min.js"></script>
-  <script src="pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script src="fontkit.bundle.js"></script>
+  <script src="pdf-lib.bundle.js"></script>
   <script>
-    async function createPdf() {
-      const { PDFDocument, rgb } = window.pdfLib;
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+    //const { PDFDocument, rgb } = window.pdfLib;
+    
+
+    let pdfDoc = null;
+    let selectedPageIndex = 0;
+
+    async function loadPdf(file) {
+      const { PDFDocument } = window.pdfLib;
       const fontkit = window.fontkit;
-
-      // Create a new PDFDocument
-      const pdfDoc = await PDFDocument.create();
-
-      // Register fontkit with pdf-lib
+      const arrayBuffer = await file.arrayBuffer();
+      pdfDoc = await PDFDocument.load(arrayBuffer);
       pdfDoc.registerFontkit(fontkit);
+      renderPdf(arrayBuffer);
+    }
 
-      const page = pdfDoc.addPage();
+    function renderPdf(arrayBuffer) {
+      const pdfViewer = document.getElementById('pdfViewer');
+      pdfViewer.innerHTML = '';
 
+      pdfjsLib.getDocument({ data: arrayBuffer }).promise.then(function (pdf) {
+        for (let i = 1; i <= pdf.numPages; i++) {
+          pdf.getPage(i).then(function (page) {
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+              canvasContext: context,
+              viewport: viewport
+            };
+            const renderTask = page.render(renderContext);
+            renderTask.promise.then(function () {
+              canvas.addEventListener('click', () => {
+                selectedPageIndex = i - 1;
+                alert(`Selected page: ${i}`);
+              });
+              pdfViewer.appendChild(canvas);
+            });
+          });
+        }
+      });
+    }
+
+    async function addTextToPdf() {
+      const { rgb } = window.pdfLib;
+      const text = document.getElementById('textInput').value;
+      const fontName = document.getElementById('fontSelector').value;
+      console.log("fontName:", fontName);
+      let fontBytes = await fetch(`fonts/${fontName}.ttf`).then(res => res.arrayBuffer());
+      let font = await pdfDoc.embedFont(fontBytes);
+
+      const page = pdfDoc.getPage(selectedPageIndex);
       const { width, height } = page.getSize();
       const fontSize = 24;
 
-      // Embed a font
-      const fontBytes = await fetch('fonts/times-new-roman.ttf').then(res => res.arrayBuffer());
-      const font = await pdfDoc.embedFont(fontBytes);
+      console.log("width:", width);
+      console.log("height:", height);
+      console.log("fontSize:", fontSize);
 
-      // Add text to the page
-      const text = document.getElementById('textInput').value;
       page.drawText(text, {
         x: 50,
         y: height - 4 * fontSize,
@@ -44,12 +105,12 @@
         color: rgb(0, 0.53, 0.71),
       });
 
-      const pdfBytes = await pdfDoc.save();
-      return pdfBytes;
+      let pdfBytes = await pdfDoc.save();
+      renderPdf(pdfBytes);
     }
 
-    document.getElementById('addTextButton').addEventListener('click', async () => {
-      const pdfBytes = await createPdf();
+    async function savePdf() {
+      const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -57,17 +118,21 @@
       link.download = 'output.pdf';
       link.click();
       URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('pdfInput').addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        await loadPdf(file);
+      }
+    });
+
+    document.getElementById('addTextButton').addEventListener('click', async () => {
+      await addTextToPdf();
     });
 
     document.getElementById('savePdfButton').addEventListener('click', async () => {
-      const pdfBytes = await createPdf();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'output.pdf';
-      link.click();
-      URL.revokeObjectURL(url);
+      await savePdf();
     });
   </script>
 </body>
